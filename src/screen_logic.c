@@ -390,18 +390,9 @@ void draw_two_sprite_words_lgd80(uint8_t x, uint8_t y, uint8_t sprite_word1, uin
   x += 8;
   y += 8;
 
-  if ((y & 1) == 0)
-  {
-    screen_nibble_high = false;
-  }else{
-    screen_nibble_high = true;
-  }
 
-  if((x & 1) == 0){
-    page2_flag = true;
-  }else{
-    page2_flag = false;
-  }
+  screen_nibble_high = (y & 1) != 0; // Even rows use the low nibble, odd rows use the high nibble
+  page2_flag = (x & 1) == 0; // Even columns on page 2, odd columns on page 1
 
   sprite_word = sprite_word1;
 
@@ -421,18 +412,18 @@ void draw_two_sprite_words_lgd80(uint8_t x, uint8_t y, uint8_t sprite_word1, uin
     // Set soft switch to write to the correct memory page
     set_page_2(page2_flag);
     if(screen_nibble_high){
-        val_to_write = 0xF0;
+      val_to_write = 0xF0;
     }else{
       val_to_write = 0xF;
     }
 
     x_mem_offset = x / 2;
 
-    if((y >> 1) < 8)
+    if(y < 16)
     {
       y_mem_base = 0x400;
     }
-    else if((y >> 1) < 16)
+    else if(y < 32)
     {
       y_mem_base = 0x428;
     }
@@ -484,11 +475,11 @@ void draw_two_sprite_words_lgd80(uint8_t x, uint8_t y, uint8_t sprite_word1, uin
 
     x_mem_offset = x / 2;
 
-    if((y >> 1) < 8)
+    if(y < 16)
     {
       y_mem_base = 0x400;
     }
-    else if((y >> 1) < 16)
+    else if(y >> 1 < 32)
     {
       y_mem_base = 0x428;
     }
@@ -519,18 +510,8 @@ void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
   // Pad for //e screen
   // x += 8;
   // y += 8;
-  if ((y & 1) == 0)
-  {
-    screen_nibble_high = false;
-  }else{
-    screen_nibble_high = true;
-  }
-
-  if((x & 1) == 0){
-    page2_flag = true;
-  }else{
-    page2_flag = false;
-  }
+  screen_nibble_high = ((y & 1) != 0);
+  page2_flag = (x & 1) == 0;
 
   for(i = 0; i < n; i++){
     sprite_mask = 128;
@@ -556,13 +537,13 @@ void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
         val_to_write = 0x0F;
       }
 
-      x_mem_offset = x / 2;
+      x_mem_offset = x >> 1;
 
-      if((y >> 1) < 8)
+      if(y < 16)
       {
         y_mem_base = 0x400;
       }
-      else if((y >> 1) < 16)
+      else if(y < 32)
       {
         y_mem_base = 0x428;
       }
@@ -573,7 +554,7 @@ void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
       y_mem_base += (((y >> 1) & 7) * 0x80);
 
       address_to_write = (uint8_t*)(y_mem_base + x_mem_offset);
-      *address_to_write ^= val_to_write;
+      address_to_write[0] ^= val_to_write;
 
       // change which page i'm writing to based on the value of J
       sprite_mask >>= 1;

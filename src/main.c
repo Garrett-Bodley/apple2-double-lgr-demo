@@ -4,69 +4,82 @@
 #include <stdint.h>
 #include "../include/screen_logic.h"
 
+uint8_t sprite1[] = {
+  0xFF,
+  0x80,
+  0xbf,
+  0x95,
+  0xbf,
+  0xa4,
+  0xbf,
+  0xbf,
+  0x80,
+  0xff,
+  0x0f,
+  0x0f,
+  0x7f,
+  0xea,
+  0xd5,
+  0xff,
+};
+
+uint8_t sprite2[] = {
+  0xf0,
+  0x10,
+  0xd0,
+  0xd0,
+  0xd0,
+  0xd0,
+  0xd0,
+  0xd0,
+  0x10,
+  0xf0,
+  0x00,
+  0x00,
+  0xe0,
+  0xb0,
+  0x70,
+  0xf0
+};
+
+void draw_recurse_logo(x, y)
+{
+  draw_sprite_words_lg80(x, y, sprite1, 16);
+  draw_sprite_words_lg80(x + 8, y, sprite2, 16);
+}
+
+void recurse_animation()
+{
+  uint8_t new_x, new_y;
+  uint8_t x = 1;
+  uint8_t y = 0;
+  uint8_t x_vector = 1;
+  uint8_t y_vector = 1;
+  volatile uint16_t i;
+  while(true)
+  {
+    draw_recurse_logo(x, y);
+    for (i = 0; i < 3000; i++) {
+        // Empty loop for delay
+    }
+    new_x = x + x_vector;
+    new_y = y + y_vector;
+    if(new_x == 0 || new_x == 68){
+      x_vector *= -1;
+    }
+    if(new_y  == 0 || new_y  == 32){
+      y_vector *= -1;
+    }
+    draw_recurse_logo(x, y);
+    x = new_x;
+    y = new_y;
+  }
+}
+
 int main(void)
 {
-  uint8_t sprite1[] = {
-    0xFF,
-    0x80,
-    0xbf,
-    0x95,
-    0xbf,
-    0xa4,
-    0xbf,
-    0xbf,
-    0x80,
-    0xff,
-    0x0f,
-    0x0f,
-    0x7f,
-    0xea,
-    0xd5,
-    0xff,
-  };
-
-  uint8_t sprite2[] = {
-    0xf0,
-    0x10,
-    0xd0,
-    0xd0,
-    0xd0,
-    0xd0,
-    0xd0,
-    0xd0,
-    0x10,
-    0xf0,
-    0x00,
-    0x00,
-    0xe0,
-    0xb0,
-    0x70,
-    0xf0
-  };
-
-  printf("Hello, World!\n");
-
   set_double_low_res();
-  clear_lgd_80();
-  draw_sprite_words_lg80(0, 0, sprite1, 16);
-  draw_sprite_words_lg80(8, 0, sprite2, 16);
-
-  draw_sprite_words_lg80(68, 0, sprite1, 16);
-  draw_sprite_words_lg80(76, 0, sprite2, 16);
-
-  draw_sprite_words_lg80(0, 32, sprite1, 16);
-  draw_sprite_words_lg80(8, 32, sprite2, 16);
-
-  draw_sprite_words_lg80(68, 32, sprite1, 16);
-  draw_sprite_words_lg80(76, 32, sprite2, 16);
-
-  draw_sprite_words_lg80(34, 16, sprite1, 16);
-  draw_sprite_words_lg80(42, 16, sprite2, 16);
-
-  // This matters when compiling to a disk image
-  //
-  // If you don't add an infinite loop the emulator will quickly execute
-  // and exit your program before you're able to see the output.
-  while(true);
+  fill_lgd_80();
+  recurse_animation();
   return 0;
 }
