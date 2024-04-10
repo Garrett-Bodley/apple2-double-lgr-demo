@@ -528,67 +528,62 @@ const uint16_t y_mem_base_lookup[] = {
 
 void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
 {
-  uint8_t j, half_y, sprite_word, val_to_write, x_mem_offset, sprite_mask;
+  uint8_t j, sprite_word, val_to_write, x_mem_offset, sprite_mask;
   uint16_t i, y_mem_base;
   uint8_t * address_to_write;
+
   bool screen_nibble_high;
   bool page2_flag;
+
+  uint8_t even_pixels[4];
+  uint8_t odd_pixels[4];
 
   screen_nibble_high = ((y & 1) != 0);
   page2_flag = (x & 1) == 0;
 
   for(i = 0; i < n; i++){
-    sprite_mask = 128;
     sprite_word = (uint8_t)sprite[i];
-    set_page_2(page2_flag);
 
     if((screen_nibble_high)){
-      val_to_write = 0xF0;
+      val_to_write = (uint8_t)0xF0;
     }else{
-      val_to_write = 0x0F;
+      val_to_write = (uint8_t)0x0F;
     }
-    y_mem_base = y_mem_base_lookup[y / 2];
 
-    // paint even sprite pixels
+    address_to_write = (uint8_t*)(y_mem_base_lookup[y / 2] + (x / 2));
+    // if(page2_flag) address_to_write += 1;
+
+    // cache even pixels
+    set_page_2(page2_flag);
+    sprite_mask = 128;
     for(j = 0; j < 4; j++)
     {
       if((sprite_word & sprite_mask) == 0) {
-        sprite_mask >>= 2;
-        x += 2;
-        continue;
+        even_pixels[j] = (uint8_t)0x00 ^ (uint8_t)(address_to_write[j]);
+      }else{
+        even_pixels[j] = val_to_write ^ (uint8_t)(address_to_write[j]);
       }
-
-      x_mem_offset = x >> 1;
-      address_to_write = (uint8_t*)(y_mem_base + x_mem_offset);
-      address_to_write[0] ^= val_to_write;
-
       sprite_mask >>= 2;
-      x += 2;
     }
-    x -= 7;
-
-    // paint odd sprite pixels
+    // cache odd pixels
     set_page_2(!page2_flag);
     sprite_mask = 64;
     for(j = 0; j < 4; j++)
     {
       if((sprite_word & sprite_mask) == 0) {
-        sprite_mask >>= 2;
-        x += 2;
-        continue;
+        odd_pixels[j] = (uint8_t)0x00 ^ (uint8_t)(address_to_write[j]);
+      }else{
+        odd_pixels[j] = val_to_write ^ (uint8_t)(address_to_write[j]);
       }
-
-      x_mem_offset = x >> 1;
-      address_to_write = (uint8_t*)(y_mem_base + x_mem_offset);
-      address_to_write[0] ^= val_to_write;
-
       sprite_mask >>= 2;
-      x += 2;
     }
 
     set_page_2(page2_flag);
+    memcpy(address_to_write, even_pixels, 4);
+    set_page_2(!page2_flag);
+    memcpy(address_to_write, odd_pixels, 4);
+
     screen_nibble_high = !screen_nibble_high;
-    x -= 9;
     ++y;
   }
 }

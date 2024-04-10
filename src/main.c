@@ -42,10 +42,22 @@ uint8_t sprite2[] = {
   0xf0
 };
 
+uint8_t simple_sprite[] = {
+  0xFF,
+  0x81,
+  0x81,
+  0x99,
+  0x99,
+  0x81,
+  0x81,
+  0xFF,
+};
+
 void draw_recurse_logo(x, y)
 {
-  draw_sprite_words_lg80(x, y, sprite1, 16);
-  draw_sprite_words_lg80(x + 8, y, sprite2, 16);
+  draw_sprite_words_lg80(x, y, simple_sprite, 8);
+  // draw_sprite_words_lg80(x, y, sprite1, 16);
+  // draw_sprite_words_lg80(x + 8, y, sprite2, 16);
 }
 
 void recurse_animation()
@@ -80,6 +92,8 @@ int main(void)
 {
   set_double_low_res();
   fill_lgd_80();
+  // draw_sprite_words_lg80(1, 1, simple_sprite, 8);
+  // while(true){};
   recurse_animation();
   return 0;
 }
