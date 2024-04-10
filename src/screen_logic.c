@@ -499,71 +499,96 @@ void draw_two_sprite_words_lgd80(uint8_t x, uint8_t y, uint8_t sprite_word1, uin
   }
 }
 
+const uint16_t y_mem_base_lookup[] = {
+  0x400,
+  0x480,
+  0x500,
+  0x580,
+  0x600,
+  0x680,
+  0x700,
+  0x780,
+  0x428,
+  0x4a8,
+  0x528,
+  0x5a8,
+  0x628,
+  0x6a8,
+  0x728,
+  0x7a8,
+  0x450,
+  0x4d0,
+  0x550,
+  0x5d0,
+  0x650,
+  0x6d0,
+  0x750,
+  0x7d0,
+};
+
 void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
 {
-  uint8_t j, bit_to_write, sprite_word, val_to_write, x_mem_offset, sprite_mask;
+  uint8_t j, half_y, sprite_word, val_to_write, x_mem_offset, sprite_mask;
   uint16_t i, y_mem_base;
   uint8_t * address_to_write;
   bool screen_nibble_high;
   bool page2_flag;
 
-  // Pad for //e screen
-  // x += 8;
-  // y += 8;
   screen_nibble_high = ((y & 1) != 0);
   page2_flag = (x & 1) == 0;
 
   for(i = 0; i < n; i++){
     sprite_mask = 128;
     sprite_word = (uint8_t)sprite[i];
-    for(j = 0; j < 8; j++)
+    set_page_2(page2_flag);
+
+    if((screen_nibble_high)){
+      val_to_write = 0xF0;
+    }else{
+      val_to_write = 0x0F;
+    }
+    y_mem_base = y_mem_base_lookup[y / 2];
+
+    // paint even sprite pixels
+    for(j = 0; j < 4; j++)
     {
-      // each j is a column
-      // We don't have to do anything if the bit we're looking at is empty
-      bit_to_write = sprite_word & sprite_mask;
-      if(bit_to_write == 0) {
-        sprite_mask >>= 1;
-        page2_flag = !page2_flag;
-        ++x;
+      if((sprite_word & sprite_mask) == 0) {
+        sprite_mask >>= 2;
+        x += 2;
         continue;
       }
 
-      // Set soft switch to write to the correct memory page
-      set_page_2(page2_flag);
-
-      if((screen_nibble_high)){
-        val_to_write = 0xF0;
-      }else{
-        val_to_write = 0x0F;
-      }
-
       x_mem_offset = x >> 1;
-
-      if(y < 16)
-      {
-        y_mem_base = 0x400;
-      }
-      else if(y < 32)
-      {
-        y_mem_base = 0x428;
-      }
-      else
-      {
-        y_mem_base = 0x450;
-      }
-      y_mem_base += (((y >> 1) & 7) * 0x80);
-
       address_to_write = (uint8_t*)(y_mem_base + x_mem_offset);
       address_to_write[0] ^= val_to_write;
 
-      // change which page i'm writing to based on the value of J
-      sprite_mask >>= 1;
-      page2_flag = !page2_flag;
-      ++x;
+      sprite_mask >>= 2;
+      x += 2;
     }
+    x -= 7;
+
+    // paint odd sprite pixels
+    set_page_2(!page2_flag);
+    sprite_mask = 64;
+    for(j = 0; j < 4; j++)
+    {
+      if((sprite_word & sprite_mask) == 0) {
+        sprite_mask >>= 2;
+        x += 2;
+        continue;
+      }
+
+      x_mem_offset = x >> 1;
+      address_to_write = (uint8_t*)(y_mem_base + x_mem_offset);
+      address_to_write[0] ^= val_to_write;
+
+      sprite_mask >>= 2;
+      x += 2;
+    }
+
+    set_page_2(page2_flag);
     screen_nibble_high = !screen_nibble_high;
-    // screen_nibble_high = false;
-    x -= 8;
+    x -= 9;
     ++y;
   }
 }
