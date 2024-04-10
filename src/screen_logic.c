@@ -550,7 +550,7 @@ void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
       val_to_write = (uint8_t)0x0F;
     }
 
-    address_to_write = (uint8_t*)(y_mem_base_lookup[y / 2] + (x / 2));
+    address_to_write = (uint8_t*)(y_mem_base_lookup[y / 2]);
     // if(page2_flag) address_to_write += 1;
 
     // cache even pixels
@@ -559,29 +559,37 @@ void draw_sprite_words_lg80(uint8_t x, uint8_t y, uint8_t* sprite, uint8_t n)
     for(j = 0; j < 4; j++)
     {
       if((sprite_word & sprite_mask) == 0) {
-        even_pixels[j] = (uint8_t)0x00 ^ (uint8_t)(address_to_write[j]);
+        even_pixels[j] = (uint8_t)0x00 ^ (uint8_t)(address_to_write[x / 2]);
       }else{
-        even_pixels[j] = val_to_write ^ (uint8_t)(address_to_write[j]);
+        even_pixels[j] = val_to_write ^ (uint8_t)(address_to_write[x / 2]);
       }
       sprite_mask >>= 2;
+      x += 2;
     }
+    x -= 7;
     // cache odd pixels
     set_page_2(!page2_flag);
     sprite_mask = 64;
     for(j = 0; j < 4; j++)
     {
       if((sprite_word & sprite_mask) == 0) {
-        odd_pixels[j] = (uint8_t)0x00 ^ (uint8_t)(address_to_write[j]);
+        odd_pixels[j] = (uint8_t)0x00 ^ (uint8_t)(address_to_write[x / 2]);
       }else{
-        odd_pixels[j] = val_to_write ^ (uint8_t)(address_to_write[j]);
+        odd_pixels[j] = val_to_write ^ (uint8_t)(address_to_write[x / 2]);
       }
       sprite_mask >>= 2;
+      x += 2;
     }
+    x -= 9;
 
     set_page_2(page2_flag);
-    memcpy(address_to_write, even_pixels, 4);
+    memcpy(&address_to_write[x / 2], even_pixels, 4);
     set_page_2(!page2_flag);
-    memcpy(address_to_write, odd_pixels, 4);
+    if(page2_flag){
+      memcpy(&address_to_write[x / 2], odd_pixels, 4);
+    }else{
+      memcpy(&address_to_write[(x / 2) + 1], odd_pixels, 4);
+    }
 
     screen_nibble_high = !screen_nibble_high;
     ++y;

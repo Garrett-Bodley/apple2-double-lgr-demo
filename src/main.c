@@ -55,9 +55,8 @@ uint8_t simple_sprite[] = {
 
 void draw_recurse_logo(x, y)
 {
-  draw_sprite_words_lg80(x, y, simple_sprite, 8);
-  // draw_sprite_words_lg80(x, y, sprite1, 16);
-  // draw_sprite_words_lg80(x + 8, y, sprite2, 16);
+  draw_sprite_words_lg80(x, y, sprite1, 16);
+  draw_sprite_words_lg80(x + 8, y, sprite2, 16);
 }
 
 void recurse_animation()
